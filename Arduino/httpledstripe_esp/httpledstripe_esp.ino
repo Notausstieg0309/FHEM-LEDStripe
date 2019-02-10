@@ -56,7 +56,11 @@ void setup() {
  // Initialize all pixels to 'off'
  stripe_setup();
   WiFi.mode(WIFI_STA);
-Serial.println();
+
+  // disable WiFi sleep
+  wifi_set_sleep_type(NONE_SLEEP_T);
+  
+  Serial.println();
   Serial.println();
   Serial.print("Connecting to ");
   Serial.println(ssid);
