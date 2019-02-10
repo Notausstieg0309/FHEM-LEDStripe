@@ -19,6 +19,11 @@ int myblueLevel;
 int myOn;
 int myOff;
 
+int dimSteps;
+int dimCurrentStep;
+
+uint32_t dimTargetColor;
+uint32_t dimInitColor[NUMPIXELS1+NUMPIXELS2];
 
 void reset();
 // control special effects
@@ -28,6 +33,9 @@ boolean blinker=false;
 boolean sparks=false;
 boolean white_sparks=false;
 boolean knightrider = false;
+boolean dim = false;
+
+
 uint16_t rainbowColor=0;
 
 
@@ -178,6 +186,52 @@ void loop() {
             }
             stripe_show();
             isGet = true;
+          }          
+          
+          // SET DIM url should be GET /dim/<rrr>,<ggg>,<bbb>
+          //                    or GET /dim/<rrr>,<ggg>,<bbb>/<steps>
+          if (inputLine.length() > 3 && inputLine.substring(0,9) == F("GET /dim/")) {
+
+            
+            int urlend = inputLine.indexOf(' ', 9 );
+            
+            String getParam = inputLine.substring(9, urlend + 1);
+            
+            int komma1 = getParam.indexOf(',');
+            int komma2 = getParam.indexOf(',', komma1 + 1);
+            
+            int slash1 = getParam.indexOf('/');
+            
+            redLevel = getParam.substring(0, komma1).toInt();
+            greenLevel = getParam.substring(komma1 + 1, komma2).toInt();
+
+            if(slash1 != -1) {
+              blueLevel = getParam.substring(komma2 + 1, slash1).toInt();
+              dimSteps = getParam.substring(slash1 + 1, urlend).toInt(); 
+            }
+            else {
+              blueLevel = getParam.substring(komma2 + 1).toInt();
+              dimSteps = 50;
+            }
+    
+            dimTargetColor = stripe_color(redLevel,greenLevel,blueLevel);
+            
+            for(int i = 0; i < NUMPIXELS1+NUMPIXELS2; i++) {
+              dimInitColor[i] = stripe_getPixelColor(i);
+            }
+
+            dimCurrentStep = 1;
+
+            rainbow = false;
+            fire = false;
+            sparks = false;
+            white_sparks = false;
+            blinker = false;
+            knightrider = true;
+            dim = true;
+            
+            isGet = true;
+            
           }
           // POST PIXEL DATA
           if (inputLine.length() > 3 && inputLine.substring(0,10) == F("POST /leds")) {
@@ -203,6 +257,7 @@ void loop() {
             sparks = false;
             white_sparks = false;
             knightrider = false;
+            dim = false;
             stripe_setBrightness(128);
             isGet = true;
           }
@@ -213,9 +268,11 @@ void loop() {
             sparks = false;
             white_sparks = false;
             knightrider = false;
+            dim = false;
             stripe_setBrightness(128);
             isGet = true;
           }
+          
           // SET WHITE_SPARKS EFFECT
           if (inputLine.length() > 3 && inputLine.substring(0,17) == F("GET /white_sparks")) {
             rainbow = false;
@@ -223,6 +280,7 @@ void loop() {
             sparks = false;
             white_sparks = true;
             knightrider = false;
+            dim = false;
             stripe_setBrightness(128);
             isGet = true;
           }
@@ -233,9 +291,11 @@ void loop() {
             sparks = true;
             white_sparks = false;
             knightrider = false;
+            dim = false;
             stripe_setBrightness(128);
             isGet = true;
           }
+          
           // SET KNIGHTRIDER EFFECT
           if (inputLine.length() > 3 && inputLine.substring(0,16) == F("GET /knightrider")) {
             rainbow = false;
@@ -243,6 +303,7 @@ void loop() {
             sparks = false;
             white_sparks = false;
             knightrider = true;
+            dim = false;
             stripe_setBrightness(128);
             isGet = true;
           }
@@ -253,6 +314,7 @@ void loop() {
             sparks = false;
             white_sparks = false;
             blinker = false;
+            dim = false;
             isGet = true;
           }
           if (inputLine.length() > 3 && inputLine.substring(0,11) == F("GET /blink/")) {
@@ -278,6 +340,7 @@ void loop() {
             fire = false;
             sparks = false;
            
+            dim = false;
             isGet = true;
           }
           inputLine = "";
@@ -295,6 +358,9 @@ void loop() {
     client.stop();
     Serial.println(F("client disconnected"));
   }
+  
+  if (dim) dimEffect();
+  
   if (fire) fireEffect();
   if (rainbow) rainbowCycle();
   if (blinker) blinkerEffect();
@@ -426,6 +492,43 @@ void knightriderEffect() {
   stripe_show();
   delay(delay_interval);
 }
+
+
+void dimEffect() {
+
+  uint8_t targetR = Red(dimTargetColor);
+  uint8_t targetG = Green(dimTargetColor);
+  uint8_t targetB = Blue(dimTargetColor);
+
+  if(dimCurrentStep < dimSteps) { // calculate current dim step
+    
+    for(int i = 0; i < NUMPIXELS1+NUMPIXELS2; i++) {
+      
+      uint8_t startR = Red(dimInitColor[i]);
+      uint8_t startG = Green(dimInitColor[i]);
+      uint8_t startB = Blue(dimInitColor[i]);
+      
+      uint8_t newR = startR + (dimCurrentStep * (float)((float)(targetR - startR) / (float)dimSteps));
+      uint8_t newG = startG + (dimCurrentStep * (float)((float)(targetG - startG) / (float)dimSteps));
+      uint8_t newB = startB + (dimCurrentStep * (float)((float)(targetB - startB) / (float)dimSteps));
+  
+      stripe_setPixelColor(i, stripe_color(newR, newG, newB));
+    }
+
+    dimCurrentStep++;
+  }
+  else { // set final color
+     for(int i = 0; i < NUMPIXELS1+NUMPIXELS2; i++) {
+        stripe_setPixelColor(i, stripe_color(targetR, targetG, targetB));
+     }
+
+     dim = false;
+  }
+
+  stripe_show();
+   
+}
+
 
 // Input a value 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
