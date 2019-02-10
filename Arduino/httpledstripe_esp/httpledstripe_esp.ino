@@ -34,6 +34,7 @@ boolean sparks=false;
 boolean white_sparks=false;
 boolean knightrider = false;
 boolean dim = false;
+boolean do_reset = false;
 
 
 uint16_t rainbowColor=0;
@@ -245,7 +246,13 @@ void loop() {
             reset();
             isGet = true;
           }
-         
+          
+          // RESET MCU
+          if (inputLine.length() > 3 && inputLine.substring(0,10) == F("GET /reset")) {
+            do_reset = true;
+            isGet = true;
+          }
+          
           // GET STATUS url should be GET /status
           if (inputLine.length() > 3 && inputLine.substring(0,11) == F("GET /status")) {
             isGet = true;
@@ -357,6 +364,12 @@ void loop() {
     // close the connection:
     client.stop();
     Serial.println(F("client disconnected"));
+  }
+
+  
+  if (do_reset) { // if reset command was executed, wait 1s and then restart
+    delay(1000);
+    ESP.restart();
   }
   
   if (dim) dimEffect();
