@@ -263,11 +263,12 @@ void loop() {
           }
           // SET FIRE EFFECT
           if (inputLine.length() > 3 && inputLine.substring(0,9) == F("GET /fire")) {
-            fire = true;
             rainbow = false;
+            fire = true;
             sparks = false;
             white_sparks = false;
-            knightrider = false;
+            blinker = false;
+            knightrider = true;
             dim = false;
             stripe_setBrightness(128);
             isGet = true;
@@ -278,7 +279,8 @@ void loop() {
             fire = false;
             sparks = false;
             white_sparks = false;
-            knightrider = false;
+            blinker = false;
+            knightrider = true;
             dim = false;
             stripe_setBrightness(128);
             isGet = true;
@@ -290,6 +292,7 @@ void loop() {
             fire = false;
             sparks = false;
             white_sparks = true;
+            blinker = false;
             knightrider = false;
             dim = false;
             stripe_setBrightness(128);
@@ -301,7 +304,8 @@ void loop() {
             fire = false;
             sparks = true;
             white_sparks = false;
-            knightrider = false;
+            blinker = false;
+            knightrider = true;
             dim = false;
             stripe_setBrightness(128);
             isGet = true;
@@ -313,6 +317,7 @@ void loop() {
             fire = false;
             sparks = false;
             white_sparks = false;
+            blinker = false;
             knightrider = true;
             dim = false;
             stripe_setBrightness(128);
@@ -325,6 +330,7 @@ void loop() {
             sparks = false;
             white_sparks = false;
             blinker = false;
+            knightrider = false;
             dim = false;
             isGet = true;
           }
@@ -350,7 +356,8 @@ void loop() {
             rainbow = false;
             fire = false;
             sparks = false;
-           
+            white_sparks = false;
+            knightrider = false;
             dim = false;
             isGet = true;
           }
