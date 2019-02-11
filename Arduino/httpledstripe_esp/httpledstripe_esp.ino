@@ -1,16 +1,13 @@
 #include <Adafruit_NeoPixel.h>
 #include <ESP8266WiFi.h>
+#include "config.h"
 
-const char* ssid     = "XXX";
-const char* password = "XXX";
-WiFiServer server(80);
-// Which pin on the Arduino is connected to the NeoPixels?
-#define LEDPIN1           14
-#define LEDPIN2           12
 
-// How many NeoPixels are attached to the Arduino?
-#define NUMPIXELS1     30
-#define NUMPIXELS2     30
+WiFiServer server(SERVER_PORT);
+
+// How many NeoPixels are attached to the NodeMCU?
+
+
 int xfrom;
 int yto;
 int myredLevel;
@@ -46,36 +43,49 @@ int cur_step=0;
 
 // setup network and output pins
 void setup() {
-// Open serial communications and wait for port to open:
-  Serial.begin(9600);
-   while (!Serial) {
+
+  pinMode(STATUS_LED_PIN, OUTPUT); // setup onboard LED pin for output
+
+  // light up onboard LED
+  digitalWrite(STATUS_LED_PIN, LOW);
+  
+  // Open serial communications and wait for port to open:
+  Serial.begin(115200);
+  while (!Serial) {
     ; // wait for serial port to connect. Needed for Leonardo only
   }
   Serial.println(F("Booting"));
 
- // Initialize all pixels to 'off'
- stripe_setup();
+  // Initialize all pixels to 'off'
+  stripe_setup();
   WiFi.mode(WIFI_STA);
 
+  #if USE_WLAN_SLEEP == 0
   // disable WiFi sleep
   wifi_set_sleep_type(NONE_SLEEP_T);
+  #endif
   
   Serial.println();
   Serial.println();
   Serial.print("Connecting to ");
-  Serial.println(ssid);
- 
-  WiFi.begin(ssid, password);
- 
+  Serial.println(WIFI_SSID);
+
+  WiFi.begin(WIFI_SSID, WIFI_KEY);
+
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    digitalWrite(STATUS_LED_PIN, HIGH);
+    delay(1000);
     Serial.print(".");
+    digitalWrite(STATUS_LED_PIN, LOW);
   }
 
   Serial.println("");
-  Serial.println("WiFi connected"); 
+  Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+  
+  digitalWrite(STATUS_LED_PIN, HIGH);
+  
   server.begin();
  
 }
@@ -221,7 +231,7 @@ void loop() {
     
             dimTargetColor = stripe_color(redLevel,greenLevel,blueLevel);
             
-            for(int i = 0; i < NUMPIXELS1+NUMPIXELS2; i++) {
+            for (int i = 0; i < NUM_PIXELS; i++) {
               dimInitColor[i] = stripe_getPixelColor(i);
             }
 
@@ -465,14 +475,14 @@ void sparksEffect() {
 }
 
 void white_sparksEffect() {
-  uint16_t i = random(NUMPIXELS1+NUMPIXELS2);
+  uint16_t i = random(NUM_PIXELS);
   uint16_t rand = random(256);
 
   if (stripe_getPixelColor(i)==0) {
     stripe_setPixelColor(i,rand*256*256+rand*256+rand);
   }
 
-  for(i = 0; i < NUMPIXELS1+NUMPIXELS2; i++) {
+  for (i = 0; i < NUM_PIXELS; i++) {
     stripe_dimPixel(i);
   }
 
@@ -482,30 +492,30 @@ void white_sparksEffect() {
 
 void knightriderEffect() {
   uint16_t i;
-  
-  cur_step+=1;
-  
-  if(cur_step>=((NUMPIXELS1+NUMPIXELS2)*2)){
-    cur_step=0;
+
+  cur_step += 1;
+
+  if (cur_step >= ((NUM_PIXELS) * 2)) {
+    cur_step = 0;
   }
   
 
-  if(cur_step<(NUMPIXELS1+NUMPIXELS2)){
     stripe_setPixelColor(cur_step, (256*256*256)-1);
     for(i=1;i<=32;i++){
       if((cur_step-i>-1)) {
         stripe_dimPixel(cur_step-i);
+  if (cur_step < (NUM_PIXELS)) {
       }
-      if((cur_step+i-1)<NUMPIXELS1+NUMPIXELS2) {
         stripe_dimPixel(cur_step+i-1);
+      if ((cur_step + i - 1) < NUM_PIXELS) {
       }
           
     }
   } else {
     stripe_setPixelColor((NUMPIXELS1+NUMPIXELS2)*2-cur_step-1, (256*256*256)-1);
     for(i=1;i<=32;i++){
-      if(((NUMPIXELS1+NUMPIXELS2)*2-cur_step-1+i<NUMPIXELS1+NUMPIXELS2)) {
-        stripe_dimPixel((NUMPIXELS1+NUMPIXELS2)*2-cur_step-1+i);
+      if (((NUM_PIXELS) * 2 - cur_step - 1 + i < NUM_PIXELS)) {
+        stripe_dimPixel((NUM_PIXELS) * 2 - cur_step - 1 + i);
       }
       if(((NUMPIXELS1+NUMPIXELS2)*2-cur_step-1-i)>-1) {
         stripe_dimPixel((NUMPIXELS1+NUMPIXELS2)*2-cur_step-1-i);
@@ -526,8 +536,8 @@ void dimEffect() {
 
   if(dimCurrentStep < dimSteps) { // calculate current dim step
     
-    for(int i = 0; i < NUMPIXELS1+NUMPIXELS2; i++) {
       
+    for (int i = 0; i < NUM_PIXELS; i++) {
       uint8_t startR = Red(dimInitColor[i]);
       uint8_t startG = Green(dimInitColor[i]);
       uint8_t startB = Blue(dimInitColor[i]);
@@ -542,9 +552,9 @@ void dimEffect() {
     dimCurrentStep++;
   }
   else { // set final color
-     for(int i = 0; i < NUMPIXELS1+NUMPIXELS2; i++) {
         stripe_setPixelColor(i, stripe_color(targetR, targetG, targetB));
      }
+    for (int i = 0; i < NUM_PIXELS; i++) {
 
      dim = false;
   }
