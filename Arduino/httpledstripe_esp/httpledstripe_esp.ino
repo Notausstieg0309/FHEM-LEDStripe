@@ -242,7 +242,7 @@ void loop() {
             sparks = false;
             white_sparks = false;
             blinker = false;
-            knightrider = true;
+            knightrider = false;
             dim = true;
             
             isGet = true;
@@ -278,7 +278,7 @@ void loop() {
             sparks = false;
             white_sparks = false;
             blinker = false;
-            knightrider = true;
+            knightrider = false;
             dim = false;
             stripe_setBrightness(128);
             isGet = true;
@@ -290,7 +290,7 @@ void loop() {
             sparks = false;
             white_sparks = false;
             blinker = false;
-            knightrider = true;
+            knightrider = false;
             dim = false;
             stripe_setBrightness(128);
             isGet = true;
@@ -315,7 +315,7 @@ void loop() {
             sparks = true;
             white_sparks = false;
             blinker = false;
-            knightrider = true;
+            knightrider = false;
             dim = false;
             stripe_setBrightness(128);
             isGet = true;
