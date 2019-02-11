@@ -1,3 +1,50 @@
+
+#ifdef LIB_NEOPIXELBUS
+
+#include <NeoPixelBrightnessBus.h>
+
+NeoPixelBrightnessBus<NeoGrbFeature, Neo800KbpsMethod> strip(NUM_PIXELS);
+
+// Initialize all pixels to 'off'
+void stripe_setup() {
+  strip.Begin();
+ // strip2.Begin();
+  stripe_show(); 
+}
+
+void stripe_show() {
+  strip.Show(); 
+ // strip2.Show(); 
+}
+
+void stripe_setPixelColor(uint16_t pixel, uint32_t color) {
+    strip.SetPixelColor(pixel, RgbColor(Red(color), Green(color), Blue(color)));
+}
+
+uint32_t stripe_getPixelColor(uint16_t pixel) {
+
+  RgbColor tmpColor;
+  
+  tmpColor = strip.GetPixelColor(pixel);
+ 
+  return stripe_color(tmpColor.R, tmpColor.G, tmpColor.B);
+}
+
+void stripe_setBrightness(uint8_t b) {
+  strip.SetBrightness(b);
+}
+
+void stripe_rotateRight() {
+  strip.RotateRight(1);
+}
+
+#endif
+
+
+#ifdef LIB_ADAFRUIT
+
+#include <Adafruit_NeoPixel.h>
+
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
 // Parameter 3 = pixel type flags, add together as needed:
@@ -5,55 +52,57 @@
 //   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
 //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(NUMPIXELS1, LEDPIN1, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel strip2 = Adafruit_NeoPixel(NUMPIXELS2, LEDPIN2, NEO_GRB + NEO_KHZ800);
+
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_PIXELS, LIB_ADAFRUIT_PIN, NEO_GRB + NEO_KHZ800);
+
 
 // Initialize all pixels to 'off'
 void stripe_setup() {
-  strip1.begin();
-  strip2.begin();
+  strip.begin();
   stripe_show(); 
 }
 
 void stripe_show() {
-  strip1.show(); 
-  strip2.show(); 
+  strip.show(); 
 }
 
-void stripe_setPixelColor(uint16_t pixel, uint32_t color) {
-  if(pixel < NUMPIXELS1) {
-    strip1.setPixelColor(NUMPIXELS1-1-pixel, color);
-  } else {
-    strip2.setPixelColor(pixel-NUMPIXELS1, color);
-  }
+void stripe_setPixelColor(uint16_t pixel, uint32_t color)
+{
+  strip.setPixelColor(NUM_PIXELS, color);
 }
 
-void stripe_dimPixel(uint16_t pixel) {
-  if(pixel < NUMPIXELS1) {
-    strip1.setPixelColor(NUMPIXELS1-1-pixel, DimColor(stripe_getPixelColor(pixel)));
-  } else {
-    strip2.setPixelColor(pixel-NUMPIXELS1, DimColor(stripe_getPixelColor(pixel)));
-  }
-}
-
-uint32_t stripe_getPixelColor(uint16_t pixel) {
-  if(pixel < NUMPIXELS1) {
-    return strip1.getPixelColor(NUMPIXELS1-1-pixel);
-  } else {
-    return strip2.getPixelColor(pixel-NUMPIXELS1);
-  }
+uint32_t stripe_getPixelColor(uint16_t pixel)
+{
+  return strip.getPixelColor(pixel);
 }
 
 void stripe_setBrightness(uint8_t b) {
-  strip1.setBrightness(b);
-  strip2.setBrightness(b);
+  strip.setBrightness(b);
 }
 
-uint16_t stripe_numPixels() {
-  return NUMPIXELS1+NUMPIXELS2;
+#endif
+
+
+
+
+
+//////////////////////////////////////////////
+// generic color helpers
+
+void stripe_dimPixel(uint16_t pixel)
+{
+   stripe_setPixelColor(pixel, DimColor(stripe_getPixelColor(pixel)));
 }
 
-uint32_t stripe_color(uint8_t r, uint8_t g, uint8_t b) {
+// returns the number of configured pixels
+uint16_t stripe_numPixels()
+{
+  return NUM_PIXELS;
+}
+
+// returns 32-bit color value from separate red, green and blue values
+uint32_t stripe_color(uint8_t r, uint8_t g, uint8_t b)
+{
   return ((uint32_t)r << 16) | ((uint32_t)g <<  8) | b;
 }
 
@@ -76,6 +125,6 @@ uint8_t Blue(uint32_t color)
 
 uint32_t DimColor(uint32_t color)
 {
-  uint32_t dimColor = strip1.Color(Red(color) >> 1, Green(color) >> 1, Blue(color) >> 1);
+  uint32_t dimColor = stripe_color(Red(color) >> 1, Green(color) >> 1, Blue(color) >> 1);
   return dimColor;
 }
