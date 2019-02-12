@@ -11,6 +11,7 @@
 // the Pin to use as status LED's (D0 = NodeMCU LED / D4 = ESP-12 LED)
 #define STATUS_LED_PIN  D4 
 
+// disable WLAN sleep modes
 #define USE_WLAN_SLEEP 0
 
 // enable OTA flash via Arduino IDE (0/1)

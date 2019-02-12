@@ -9,22 +9,8 @@
 #include <ArduinoOTA.h>
 #endif
 
+// the server object listening on the defined port
 WiFiServer server(SERVER_PORT);
-
-// How many NeoPixels are attached to the NodeMCU?
-
-
-int xfrom;
-int yto;
-int myredLevel;
-int mygreenLevel;
-int myblueLevel;
-int myOn;
-int myOff;
-
-
-
-void reset();
 
 // control special effects
 boolean fire = false;
@@ -35,7 +21,17 @@ boolean white_sparks = false;
 boolean knightrider = false;
 boolean dim = false;
 boolean segments = false;
+boolean fadeIn = false;
+boolean fadeOut = false;
 
+// blinker specific variables
+int xfrom;
+int yto;
+int myOn;
+int myOff;
+int myredLevel;
+int mygreenLevel;
+int myblueLevel;
 
 // rainbow specific variables
 boolean rainbow_drawn = false;
@@ -50,16 +46,17 @@ uint32_t dimInitColor[NUM_PIXELS];
 // knightrider specific values
 int cur_step = 0;
 
+// reset the MCU at the end of the main loop
 boolean do_reset = false;
 
+// wait interval between each effect step
 uint16_t delay_interval = 50;
-
-
 
 // setup network and output pins
 void setup() {
 
-  pinMode(STATUS_LED_PIN, OUTPUT); // setup onboard LED pin for output
+  // setup onboard LED pin for output
+  pinMode(STATUS_LED_PIN, OUTPUT); 
 
   // light up onboard LED
   digitalWrite(STATUS_LED_PIN, LOW);
@@ -69,6 +66,7 @@ void setup() {
   while (!Serial) {
     ; // wait for serial port to connect. Needed for Leonardo only
   }
+  
   Serial.println(F("Booting"));
 
   // Initialize all pixels to 'off'
@@ -81,26 +79,22 @@ void setup() {
   #endif
   
   Serial.println();
-  Serial.println();
   Serial.print("Connecting to ");
   Serial.println(WIFI_SSID);
 
   WiFi.begin(WIFI_SSID, WIFI_KEY);
 
   while (WiFi.status() != WL_CONNECTED) {
-    digitalWrite(STATUS_LED_PIN, HIGH);
-    delay(1000);
-    Serial.print(".");
     digitalWrite(STATUS_LED_PIN, LOW);
+    delay(500);
+    digitalWrite(STATUS_LED_PIN, HIGH);
+    delay(500);
+    Serial.print(".");
   }
-
-  Serial.println("");
+  
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
-  
-  digitalWrite(STATUS_LED_PIN, HIGH);
-
 
   // OTA Stuff if enabled
   #if OTA_FLASH_ENABLE == 1
@@ -223,9 +217,9 @@ void loop() {
 
           // SET SINGLE PIXEL url should be GET /rgb/n/rrr,ggg,bbb
           if (inputLine.length() > 3 && inputLine.substring(0, 9) == F("GET /rgb/")) {
-            int slash = inputLine.indexOf('/', 9 );
+            int slash = inputLine.indexOf('/', 9);
             ledix = inputLine.substring(9, slash).toInt();
-            int urlend = inputLine.indexOf(' ', 9 );
+            int urlend = inputLine.indexOf(' ', 9);
             String getParam = inputLine.substring(slash + 1, urlend + 1);
             int komma1 = getParam.indexOf(',');
             int komma2 = getParam.indexOf(',', komma1 + 1);
@@ -249,11 +243,11 @@ void loop() {
           }
           // SET PIXEL RANGE url should be GET /range/x,y/rrr,ggg,bbb
           if (inputLine.length() > 3 && inputLine.substring(0, 11) == F("GET /range/")) {
-            int slash = inputLine.indexOf('/', 11 );
+            int slash = inputLine.indexOf('/', 11);
             int komma1 = inputLine.indexOf(',');
             int x = inputLine.substring(11, komma1).toInt();
             int y = inputLine.substring(komma1 + 1, slash).toInt();
-            int urlend = inputLine.indexOf(' ', 11 );
+            int urlend = inputLine.indexOf(' ', 11);
             String getParam = inputLine.substring(slash + 1, urlend + 1);
             komma1 = getParam.indexOf(',');
             int komma2 = getParam.indexOf(',', komma1 + 1);
@@ -271,8 +265,7 @@ void loop() {
           //                    or GET /dim/<rrr>,<ggg>,<bbb>/<steps>
           if (inputLine.length() > 3 && inputLine.substring(0, 9) == F("GET /dim/"))
           {
-
-            int urlend = inputLine.indexOf(' ', 9 );
+            int urlend = inputLine.indexOf(' ', 9);
 
             String getParam = inputLine.substring(9, urlend + 1);
 
@@ -314,11 +307,11 @@ void loop() {
           
           // SET BLINK EFFECT url should be GET /blink/<x>,<y>/<rrr>,<ggg>,<bbb>,<on>,<off>
           if (inputLine.length() > 3 && inputLine.substring(0, 11) == F("GET /blink/")) {
-            int slash = inputLine.indexOf('/', 11 );
+            int slash = inputLine.indexOf('/', 11);
             int komma1 = inputLine.indexOf(',');
             xfrom = inputLine.substring(11, komma1).toInt();
             yto = inputLine.substring(komma1 + 1, slash).toInt();
-            int urlend = inputLine.indexOf(' ', 11 );
+            int urlend = inputLine.indexOf(' ', 11);
             String getParam = inputLine.substring(slash + 1, urlend + 1);
             komma1 = getParam.indexOf(',');
             int komma2 = getParam.indexOf(',', komma1 + 1);
@@ -407,7 +400,6 @@ void loop() {
             rainbow_drawn = false;
             rainbowColor = 0;
             
-            stripe_setBrightness(128);
             isGet = true;
           }
 
@@ -726,7 +718,6 @@ void dimEffect() {
   }
 
   stripe_show();
-  delay(delay_interval);
 }
 
 
