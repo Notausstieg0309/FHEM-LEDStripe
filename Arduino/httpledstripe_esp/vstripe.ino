@@ -1,4 +1,7 @@
 
+uint32_t current_colors[NUM_PIXELS];
+uint8_t  current_brightness = 255;
+
 #ifdef LIB_NEOPIXELBUS
 
 #include <NeoPixelBrightnessBus.h>
@@ -17,22 +20,16 @@ void stripe_show() {
  // strip2.Show(); 
 }
 
-void stripe_setPixelColor(uint16_t pixel, uint32_t color) {
+void stripe_setDirectPixelColor(uint16_t pixel, uint32_t color) {
     strip.SetPixelColor(pixel, RgbColor(Red(color), Green(color), Blue(color)));
 }
 
-uint32_t stripe_getPixelColor(uint16_t pixel) {
+void stripe_setPixelColor(uint16_t pixel, uint32_t color) {
 
-  RgbColor tmpColor;
-  
-  tmpColor = strip.GetPixelColor(pixel);
- 
-  return stripe_color(tmpColor.R, tmpColor.G, tmpColor.B);
+    current_colors[pixel] = color;
+    stripe_applyPixelBrightness(pixel);
 }
 
-void stripe_setBrightness(uint8_t b) {
-  strip.SetBrightness(b);
-}
 
 void stripe_rotateRight() {
   strip.RotateRight(1);
@@ -66,18 +63,14 @@ void stripe_show() {
   strip.show(); 
 }
 
-void stripe_setPixelColor(uint16_t pixel, uint32_t color)
+void stripe_setDirectPixelColor(uint16_t pixel, uint32_t color)
 {
   strip.setPixelColor(NUM_PIXELS, color);
 }
 
-uint32_t stripe_getPixelColor(uint16_t pixel)
+uint32_t stripe_getDirectPixelColor(uint16_t pixel)
 {
   return strip.getPixelColor(pixel);
-}
-
-void stripe_setBrightness(uint8_t b) {
-  strip.setBrightness(b);
 }
 
 #endif
@@ -89,9 +82,50 @@ void stripe_setBrightness(uint8_t b) {
 //////////////////////////////////////////////
 // generic color helpers
 
+void stripe_applyPixelBrightness(uint16_t pixel)
+{
+
+  if(current_brightness == 255)
+  {
+    stripe_setDirectPixelColor(pixel, current_colors[pixel]);
+  }
+  else if(current_brightness == 0)
+  {
+    stripe_setDirectPixelColor(pixel, 0);
+  }
+  else if(current_brightness < 255 && current_brightness > 0)
+  {
+    uint8_t r = Red(current_colors[pixel]);
+    uint8_t g = Green(current_colors[pixel]);
+    uint8_t b = Blue(current_colors[pixel]);
+    
+    float factor = ((float)current_brightness / 255.0f);
+    r = r * (float)factor; 
+    g = g * (float)factor; 
+    b = b * (float)factor; 
+    
+    stripe_setDirectPixelColor(pixel, stripe_color(r, g, b));
+  }
+}
+
+uint32_t stripe_getPixelColor(uint16_t pixel) {
+  return current_colors[pixel];
+}
+
 void stripe_dimPixel(uint16_t pixel)
 {
    stripe_setPixelColor(pixel, DimColor(stripe_getPixelColor(pixel)));
+}
+
+void stripe_setBrightness(uint8_t b) {
+  current_brightness = b;
+  for (int i = 0; i < NUM_PIXELS; i++) {
+    stripe_applyPixelBrightness(i);
+  }
+}
+
+uint8_t stripe_getBrightness() {
+  return current_brightness;
 }
 
 // returns the number of configured pixels

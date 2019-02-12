@@ -351,10 +351,20 @@ void loop() {
           
           // SET ALL PIXELS OFF url should be GET /off
           if (inputLine.length() > 3 && inputLine.substring(0, 8) == F("GET /off")) {
-            reset();
+            fadeIn = false;
+            fadeOut = true;
+            
             isGet = true;
           }
 
+          // SET ALL PIXELS to last color url should be GET /on
+          if (inputLine.length() > 3 && inputLine.substring(0, 7) == F("GET /on")) {
+            fadeIn = true;
+            fadeOut = false;
+            
+            isGet = true;
+          }
+          
           // RESET MCU
           if (inputLine.length() > 3 && inputLine.substring(0, 10) == F("GET /reset")) {
             do_reset = true;
@@ -375,7 +385,9 @@ void loop() {
             blinker = false;
             knightrider = false;
             dim = false;
-
+            fadeIn = true;
+            fadeOut = false;
+            
             stripe_setBrightness(128);
             isGet = true;
           }
@@ -389,6 +401,8 @@ void loop() {
             blinker = false;
             knightrider = false;
             dim = false;
+            fadeIn = true;
+            fadeOut = false;
             
             rainbow_drawn = false;
             rainbowColor = 0;
@@ -406,8 +420,9 @@ void loop() {
             blinker = false;
             knightrider = false;
             dim = false;
-
-            stripe_setBrightness(128);
+            fadeIn = true;
+            fadeOut = false;
+            
             isGet = true;
           }
 
@@ -420,9 +435,9 @@ void loop() {
             blinker = false;
             knightrider = false;
             dim = false;
-
-            stripe_setBrightness(128);
-
+            fadeIn = true;
+            fadeOut = false;
+            
             isGet = true;
           }
 
@@ -435,10 +450,9 @@ void loop() {
             blinker = false;
             knightrider = true;
             dim = false;
-
+            fadeIn = true;
+            fadeOut = false;
             cur_step = 0;
-            
-            stripe_setBrightness(128);
 
             isGet = true;
           }
@@ -452,7 +466,9 @@ void loop() {
             blinker = false;
             knightrider = false;
             dim = false;
-
+            fadeIn = false;
+            fadeOut = false;
+            
             isGet = true;
           }
           
@@ -479,6 +495,9 @@ void loop() {
     ESP.restart();
   }
 
+  if (fadeIn) fadeInEffect();
+  if (fadeOut) fadeOutEffect();
+  
   if (dim) dimEffect();
 
   if (fire) fireEffect();
@@ -621,6 +640,59 @@ void knightriderEffect() {
   delay(delay_interval);
 }
 
+void fadeInEffect() {
+  uint8_t curr = stripe_getBrightness();
+  if(curr < 255) {
+    stripe_setBrightness(curr + 1);
+
+    if(curr > 245)
+    {
+        stripe_setBrightness(curr + 1);
+    }
+    else
+    {
+       stripe_setBrightness(curr + 10);
+    }
+  }
+  else
+  {
+    fadeIn = false;
+  }
+  stripe_show();
+  delay(5);
+}
+
+void fadeOutEffect() {
+  uint8_t curr = stripe_getBrightness();
+
+  Serial.println(curr);
+  
+  if(curr > 0) {
+
+    if(curr < 10)
+    {
+        stripe_setBrightness(curr - 1);
+    }
+    else
+    {
+       stripe_setBrightness(curr - 10);
+    }
+  }
+  else
+  {
+    rainbow = false;
+    fire = false;
+    sparks = false;
+    white_sparks = false;
+    blinker = false;
+    knightrider = false;
+    dim = false;
+    fadeOut = false;
+    fadeIn = false;
+  }
+  stripe_show();
+  delay(5);
+}
 
 void dimEffect() {
 
