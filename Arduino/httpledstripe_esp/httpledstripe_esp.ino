@@ -2,6 +2,12 @@
 #include <ESP8266WiFi.h>
 #include "config.h"
 
+#if OTA_FLASH_ENABLE == 1
+// neccessary for OTA flashing via Arduino IDE
+#include <ESP8266mDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
+#endif
 
 WiFiServer server(SERVER_PORT);
 
@@ -94,12 +100,60 @@ void setup() {
   Serial.println(WiFi.localIP());
   
   digitalWrite(STATUS_LED_PIN, HIGH);
+
+
+  // OTA Stuff if enabled
+  #if OTA_FLASH_ENABLE == 1
   
+  #ifdef OTA_FLASH_HOSTNAME
+    ArduinoOTA.setHostname(OTA_FLASH_HOSTNAME);
+  #endif
+  
+  ArduinoOTA.onStart([]() {
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH) {
+      type = "sketch";
+    } else { // U_SPIFFS
+      type = "filesystem";
+    }
+
+    // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+    Serial.println("Start updating " + type);
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) {
+      Serial.println("Auth Failed");
+    } else if (error == OTA_BEGIN_ERROR) {
+      Serial.println("Begin Failed");
+    } else if (error == OTA_CONNECT_ERROR) {
+      Serial.println("Connect Failed");
+    } else if (error == OTA_RECEIVE_ERROR) {
+      Serial.println("Receive Failed");
+    } else if (error == OTA_END_ERROR) {
+      Serial.println("End Failed");
+    }
+  });
+  ArduinoOTA.begin();
+  #endif
+
+  // start the webserver
   server.begin();
 }
 
 // request receive loop
 void loop() {
+  // handle OTA stuff if enabled
+  #if OTA_FLASH_ENABLE == 1
+  ArduinoOTA.handle();
+  #endif
+  
   // listen for incoming clients
   WiFiClient client = server.available();  // Check if a client has connected
   if (client) {

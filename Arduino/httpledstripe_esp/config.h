@@ -13,6 +13,11 @@
 
 #define USE_WLAN_SLEEP 0
 
+// enable OTA flash via Arduino IDE (0/1)
+#define OTA_FLASH_ENABLE    1
+
+// set a custom esp hostname in Arduino IDE, if commented out, the board id will be used (esp8266-XXXXX)
+#define OTA_FLASH_HOSTNAME  "esp-wohnzimmer"  
 
 // Select the used NeoPixel library, only one can be active at the same time
 #define LIB_NEOPIXELBUS
